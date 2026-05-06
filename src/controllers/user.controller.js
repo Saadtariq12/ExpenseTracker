@@ -105,52 +105,72 @@ const transaction = asyncHandler(async (req, res) => {
 
 const Report = asyncHandler(async (req, res) => {
   // 1. Extract from req.query
-  const { month, year } = req.query;
-
-  // 2. Validate existence
-  if (!month || !year) {
-    throw new APIError(400, "Month and year are required query parameters");
+  const { month, year, category } = req.query;
+  const category_given = true;
+    const find_expense = {
+      user: req.user._id,
+      type: "expense"
+    }
+  if(month && year){
+    // 3. Convert to Numbers (Query params always arrive as strings)
+    const selectedMonth = parseInt(month); // 3
+    const selectedYear = parseInt(year); // 2026
+    const start_date = new Date(selectedYear, selectedMonth - 1, 1);
+    const end_date = new Date(selectedYear, selectedMonth, 0);
+    find_expense.date = {
+        $gte: start_date,
+        $lte: end_date,
+    };
   }
+  
+  // 2. ONLY add category if it exists in the request
+  if (category) {
+    find_expense.category = category;
+  }
+  const expense_report = await Transaction.find(find_expense);
 
-  // 3. Convert to Numbers (Query params always arrive as strings)
-  const selectedMonth = parseInt(month); // 3
-  const selectedYear = parseInt(year); // 2026
-  const start_date = new Date(selectedYear, selectedMonth - 1, 1);
-  const end_date = new Date(selectedYear, selectedMonth, 0);
-  const expense_report = await Transaction.find({
-    user: req.user._id,
-    date: {
-      $gte: start_date, //greater than or equal to
-      $lte: end_date, //less than or equal to
-    },
-
-    type: "expense",
-  });
-
+  const simplifiedExpenseReport = expense_report.map((item) => ({
+    category: item.category,
+    amount: item.amount,
+  }));
   let total_expense = 0;
   for (let i = 0; i < expense_report.length; i++) {
-    total_expense +=  expense_report[i].amount;
+    total_expense += expense_report[i].amount;
   }
-  const income_report = await Transaction.find({
+  const find_income = {
     user: req.user._id,
-    date: {
-      $gte: start_date, //greater than or equal to
-      $lte: end_date, //less than or equal to
-    },
-
     type: "income",
-  });
+  };
+  if(month && year){
+    const selectedMonth = parseInt(month); // 3
+    const selectedYear = parseInt(year); // 2026
+    const start_date = new Date(selectedYear, selectedMonth - 1, 1);
+    const end_date = new Date(selectedYear, selectedMonth, 0);
+    find_income.date = {
+      $gte: start_date,
+      $lte: end_date,
+    };
+  }
+  // 2. ONLY add category if it exists in the request
+  if (category) {
+    find_income.category = category;
+  }
+  const income_report = await Transaction.find(find_income);
 
   let total_income = 0;
   for (let i = 0; i < income_report.length; i++) {
     total_income += income_report[i].amount;
   }
-  const total_savings = total_income - total_expense;
+  const simplifiedIncomeReport = income_report.map((item) => ({
+    category: item.category,
+    amount: item.amount,
+  }));
   return res.status(200).json(
     new APIresponse(200, "Report generated successfully", {
+      simplifiedExpenseReport,
+      simplifiedIncomeReport,
       total_income,
       total_expense,
-      total_savings,
     }),
   );
 });
