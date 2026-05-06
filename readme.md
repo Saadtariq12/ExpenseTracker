@@ -30,9 +30,10 @@ A robust backend service for personal finance management. Users can track their 
 ### Transactions
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| POST | `/api/v1/transactions/add` | Log a new income/expense |
-| GET | `/api/v1/transactions/report/:month` | Get report for a specific month (e.g., `/report/may`) |
-| GET | `/api/v1/transactions/history` | Get all transaction history |
+| POST | `/api/v1/transactions` | Log a new income/expense |
+| GET | `/api/v1/transactions/report` | Get all transaction history |
+| GET | `/api/v1/transactions/report?month&year` | Get report for a specific month and year (e.g., `/report?moth=3&year=2026`) |
+| GET | `/api/v1/transactions/reportmonth&year&category>` | Get report for a specific month,year and category |
 
 ## ⚙️ Installation & Setup
 
